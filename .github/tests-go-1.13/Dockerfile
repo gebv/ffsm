@@ -1,6 +1,6 @@
-FROM golang:1.12
+FROM golang:1.13
 
-LABEL "com.github.actions.name"="golang:1.12"
+LABEL "com.github.actions.name"="golang:1.13"
 LABEL "com.github.actions.icon"="mic"
 LABEL "com.github.actions.color"="purple"
 
