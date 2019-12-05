@@ -162,7 +162,7 @@ func (m *MachineState) Dispatch(ctx context.Context, nextState State, payload Pa
 			// 	continue
 			// }
 			var actionDoneCh = make(chan error)
-			go func() {
+			go func(act ActionLayer) {
 				defer func() {
 					if r := recover(); r != nil {
 						actionDoneCh <- DispatchError{
@@ -194,7 +194,7 @@ func (m *MachineState) Dispatch(ctx context.Context, nextState State, payload Pa
 					}
 					return
 				}
-			}()
+			}(act)
 
 			select {
 			case <-ctx.Done():
