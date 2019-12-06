@@ -50,6 +50,11 @@ func Test_Simple2(t *testing.T) {
 	wfOpenTokTok.Add(OpenDoor, CloseDoor, s.Empty, "open->close")
 	wfOpenTokTok.Add(CloseDoor, TokTokDoor, s.TokTokDoor, "close->toktok")
 
+	wfOnlyBobViaPipeline := make(Stack)
+	wfOnlyBobViaPipeline.Add(CloseDoor, OpenDoor, s.AllowedIfAnonym, "close->open")
+	wfOnlyBobViaPipeline.Add(CloseDoor, OpenDoor, s.PipelineContext_SetBobName, "close->open(set bob)")
+	wfOnlyBobViaPipeline.Add(CloseDoor, OpenDoor, s.AccessOnlyBob, "close->open(opened)")
+
 	canceledCtx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -257,6 +262,27 @@ func Test_Simple2(t *testing.T) {
 			hasFeedback: true,
 			feedback:    nil,
 		},
+
+		{
+			stateObj:    &Door{State: CloseDoor},
+			wf:          wfOnlyBobViaPipeline,
+			name:        "Door_PipelineContext",
+			ctx:         context.Background(),
+			err:         nil,
+			initState:   OpenDoor,
+			finiteState: OpenDoor,
+			hasFeedback: false,
+		},
+		{
+			stateObj:    &Door{State: CloseDoor},
+			wf:          wfOnlyBobViaPipeline,
+			name:        "Door_PipelineContext",
+			ctx:         SetNameFromCtx(context.Background(), "some"),
+			err:         errors.New("Access denied"),
+			initState:   OpenDoor,
+			finiteState: CloseDoor,
+			hasFeedback: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -371,12 +397,24 @@ func (s *doorTestService) ForceCloseDoor(ctx context.Context, payload Payload) (
 	return ctx, nil
 }
 
+func (s *doorTestService) AllowedIfAnonym(ctx context.Context, p Payload) (context.Context, error) {
+	gotName := GetNameFromCtx(ctx)
+	if gotName != "" {
+		return ctx, errors.New("Access denied")
+	}
+	return ctx, nil
+}
+
 func (s *doorTestService) AccessOnlyBob(ctx context.Context, payload Payload) (context.Context, error) {
 	gotName := GetNameFromCtx(ctx)
 	if gotName != "bob" {
 		return ctx, errors.New("Access denied")
 	}
 	return ctx, nil
+}
+
+func (s *doorTestService) PipelineContext_SetBobName(ctx context.Context, payload Payload) (context.Context, error) {
+	return SetNameFromCtx(ctx, "bob"), nil
 }
 
 func SetNameFromCtx(ctx context.Context, name string) context.Context {

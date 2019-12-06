@@ -157,16 +157,17 @@ func (m *MachineState) Dispatch(ctx context.Context, nextState State, payload Pa
 
 	done := make(chan error, 1)
 	go func(ctx context.Context) {
-		var err error
-
 		for _, act := range actions {
 			actStart := time.Now()
 			// if act.Func == nil {
 			// 	// skip empty procedure
 			// 	continue
 			// }
+			var ctxAfterCh = make(chan context.Context)
 			var actionDoneCh = make(chan error)
 			go func(act ActionLayer) {
+				var actionCtx = setMachineAndStates(ctx, fm, currState, nextState)
+				var err error
 				defer func() {
 					if r := recover(); r != nil {
 						actionDoneCh <- DispatchError{
@@ -177,18 +178,19 @@ func (m *MachineState) Dispatch(ctx context.Context, nextState State, payload Pa
 							Err:               fmt.Errorf("Recover panic: %v", r),
 							PanicStackRuntime: string(debug.Stack()),
 						}
+						close(actionDoneCh)
 						return
 					}
 
 					if err != nil {
 						actionDoneCh <- err
+						close(actionDoneCh)
 						return
 					}
 
-					close(actionDoneCh)
+					ctxAfterCh <- actionCtx
 				}()
 
-				actionCtx := setMachineAndStates(ctx, fm, currState, nextState)
 				if actionCtx, err = act.Func(actionCtx, payload); err != nil {
 					actionDoneCh <- DispatchError{
 						ActionName: act.Name,
@@ -203,6 +205,7 @@ func (m *MachineState) Dispatch(ctx context.Context, nextState State, payload Pa
 			select {
 			case <-ctx.Done():
 				return
+			case ctx = <-ctxAfterCh:
 			case err, ok := <-actionDoneCh:
 				if ok && err != nil {
 					done <- err
