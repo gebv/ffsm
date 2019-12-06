@@ -3,6 +3,7 @@ package ffsm
 // Stack store of actions of event.
 type Stack map[StackKey][]ActionLayer
 
+// StackKey is the identifier of the transition.
 type StackKey struct {
 	Src State
 	Dst State
@@ -29,6 +30,7 @@ func (r Stack) Get(src, dst State) []ActionLayer {
 	return r[StackKey{Src: src, Dst: dst}]
 }
 
+// ActionLayer is the action used in transitions.
 type ActionLayer struct {
 	// Fund procedure function.
 	Func Procedure

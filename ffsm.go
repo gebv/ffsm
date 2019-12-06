@@ -2,6 +2,7 @@ package ffsm
 
 import "context"
 
+// Payload abstract payload.
 type Payload interface{}
 
 // Machine machine state.
@@ -16,8 +17,10 @@ type Machine interface {
 	Channel() Channel
 }
 
+// Procedure handler of transition.
 type Procedure func(ctx context.Context, payload Payload) (context.Context, error)
 
+// EntityState is the getter setter of state.
 type EntityState interface {
 	SetState(s State)
 	GetState() *State
@@ -27,12 +30,15 @@ type wrapEntityState struct {
 	State *State
 }
 
+// SetState sets new state.
 func (w *wrapEntityState) SetState(s State) {
 	w.State.Set(s)
 }
 
+// SetState returns state.
 func (w wrapEntityState) GetState() *State {
 	return w.State
 }
 
+// checks implemention EntityState
 var _ EntityState = (*wrapEntityState)(nil)

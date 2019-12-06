@@ -1,6 +1,9 @@
 package ffsm
 
+// AnyState is the any state.
 const AnyState State = "*"
+
+// UnknownState is the unknown state.
 const UnknownState State = ""
 
 // State name of state.

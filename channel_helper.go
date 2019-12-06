@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+// WaitString returns a channel (one message size) which will be the message
+// from the incoming Channel
 func WaitString(ctx context.Context, ch Channel) chan string {
 	done := make(chan string, 1)
 	if ctx.Err() != nil {

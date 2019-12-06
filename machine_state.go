@@ -9,6 +9,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// MachineFrom returns new Machine with transicion rules for obj type.
+//
+// Object should be *State or implement EntityState.
 func MachineFrom(wf Stack, obj interface{}) *MachineState {
 	mActionDur := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -95,6 +98,7 @@ func MachineFrom(wf Stack, obj interface{}) *MachineState {
 	return nil
 }
 
+// MachineState providing FSM functionality.
 type MachineState struct {
 	s  EntityState
 	wf Stack
