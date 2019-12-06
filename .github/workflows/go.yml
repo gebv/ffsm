@@ -16,5 +16,8 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
-    - name: Test
+    - name: Run tests
       run: make test
+
+    - name: After success tests uploads to codecov
+      run: bash <(curl -s https://codecov.io/bash)
