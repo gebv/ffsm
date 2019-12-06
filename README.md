@@ -2,6 +2,7 @@
 
 ![CI Status](https://github.com/gebv/ffsm/workflows/Go/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gebv/ffsm)](https://goreportcard.com/report/github.com/gebv/ffsm)
+[![codecov](https://codecov.io/gh/gebv/ffsm/branch/master/graph/badge.svg)](https://codecov.io/gh/gebv/ffsm)
 
 Working code [see more in tests](machine_state_test.go)
 
