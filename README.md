@@ -1,5 +1,8 @@
 # FFSM
 
+![CI Status](https://github.com/gebv/ffsm/workflows/Go/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gebv/ffsm)](https://goreportcard.com/report/github.com/gebv/ffsm)
+
 Working code [see more in tests](machine_state_test.go)
 
 ## Concept
