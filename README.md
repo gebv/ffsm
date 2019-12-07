@@ -32,7 +32,7 @@ fsm := NewFSM(wf, CloseDoor)
 fsm.SetState(CloseDoor)
 
 // send a transition request (thread-safe)
-errCh, _ := fsm.Distapch(ctx, OpenDoor)
+errCh, _ := fsm.Dispatch(ctx, OpenDoor)
 
 // (optional) waiting until the processing of the current transition is completed
 err := <- errCh
