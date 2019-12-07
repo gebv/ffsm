@@ -4,28 +4,42 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gebv/ffsm)](https://goreportcard.com/report/github.com/gebv/ffsm)
 [![codecov](https://codecov.io/gh/gebv/ffsm/branch/master/graph/badge.svg)](https://codecov.io/gh/gebv/ffsm)
 
-Working code [see more in tests](machine_state_test.go)
+Finite state machine (FSM) written in Go. It is a low-level primitive for more complex solutions.
 
-## Concept
+Working code [see more in tests](fsm_test.go)
 
-The following is concept code.
+## Features
+
+* dispatcher is thread-safe
+* implemented `prometheus.Collector`
+
+## Examples
+
+The following is example code.
 
 ```golang
-// custom service
-s := &doorManager{}
+// FSM transition service
+s := &door{}
 
 // workflow or stateflow
-wf := make(Stack)
-wf.Add(CloseDoor, OpenDoor, s.AccessOnlyBob, "Bob only have access to door.")
-wf.Add(CloseDoor, TokTokDoor, s.TokTokDoor, "Bob only have access to door. (example redirect process via sub-dispatch).")
-wf.Add(OpenDoor, CloseDoor, s.Empty, "Anyone can close the door.")
+wf := make(Stack).
+  Add(CloseDoor, OpenDoor, s.AccessOnlyBob). // bob only have access to door (sets payload via context).
+  Add(OpenDoor, CloseDoor, s.Empty) // anyone can close the door.
 
-// initial state
-initalState := CloseDoor
-fsm := NewFSM(wf, &initalState)
-err := fsm.Distapch(ctx, OpenDoor, Payload)
+// setup FSM with initial state
+fsm := NewFSM(wf, CloseDoor)
+// or sets state (thread-safe)
+fsm.SetState(CloseDoor)
+
+// send a transition request (thread-safe)
+errCh, _ := fsm.Distapch(ctx, OpenDoor)
+
+// (optional) waiting until the processing of the current transition is completed
+err := <- errCh
 if err != nil {
-  // fail
+  // handle the transition error
 }
-fsm.CurrentState() // finite state - initalState == fsm.CurrentState()
+
+// final state (thread-safe)
+fsm.State()
 ```

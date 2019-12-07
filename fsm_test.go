@@ -2,6 +2,7 @@ package ffsm
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -214,6 +215,46 @@ func Test_FSM_Simple1(t *testing.T) {
 	time.Sleep(time.Second)
 }
 
+func Test_FSM_FullState_ConcurrentDispatch(t *testing.T) {
+	door := &door{}
+	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob).
+		Add(OpenDoor, CloseDoor, door.Empty)
+
+	ctx := context.WithValue(context.Background(), "__name", "bob")
+	fsm := NewFSM(wf, CloseDoor)
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for n := 0; n < 1000; n++ {
+				fsm.Size()
+			}
+		}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for n := 0; n < 100; n++ {
+				done, _ := fsm.Dispatch(ctx, OpenDoor)
+				<-done
+			}
+		}()
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for n := 0; n < 100; n++ {
+				done, _ := fsm.Dispatch(ctx, CloseDoor)
+				<-done
+			}
+		}()
+	}
+
+	assert.NotEqual(t, 0, fsm.Size())
+	wg.Wait()
+	t.Log(fsm.State())
+	assert.EqualValues(t, 0, fsm.Size())
+}
+
 func Benchmark_FSM_Simple1(b *testing.B) {
 	door := &door{}
 	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob)
@@ -259,6 +300,10 @@ func (d door) IfAnonymThenBob(ctx context.Context) (context.Context, error) {
 
 func (d door) Panic(ctx context.Context) (context.Context, error) {
 	panic("door.Panic")
+	return ctx, nil
+}
+
+func (d door) Empty(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 

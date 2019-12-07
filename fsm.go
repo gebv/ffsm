@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -81,6 +82,9 @@ type FSM struct {
 	wg         sync.WaitGroup
 	toDispatch chan *messageToDispatch
 
+	numAdded     uint64 // counter of added commands
+	numProcessed uint64 // counter of processed commands
+
 	name string
 
 	mActionDuration *prometheus.HistogramVec
@@ -139,10 +143,14 @@ func (e *FSM) runDispatcher() {
 	var actions []Procedure
 	var err error
 	var dispatchStart, actionStart time.Time
+	var actionRes chan resultOfActionTransition
+
 	for m := range e.toDispatch {
+		atomic.AddUint64(&e.numProcessed, 1)
 		dispatchStart = time.Now()
 		err = nil
 		current = e.State()
+
 		if current.Match(UnknownState) {
 			if m.done != nil {
 				m.done <- ErrNotInitalState
@@ -167,13 +175,14 @@ func (e *FSM) runDispatcher() {
 		nextCtx, cancel := context.WithCancel(hydrateContextForAction(m.ctx, e.Dispatch, current, m.next))
 		defer cancel()
 
-		for _i, action := range actions {
+		for _i, actionFn := range actions {
 			actionStart = time.Now()
-			var actionRes = make(chan *resultOfActionTransition, 1)
+			actionRes = make(chan resultOfActionTransition, 1)
+
 			go func(ctx context.Context) {
 				defer func() {
 					if r := recover(); r != nil {
-						actionRes <- &resultOfActionTransition{
+						actionRes <- resultOfActionTransition{
 							err: dispatcherError{
 								Recover:     r,
 								SrcState:    current,
@@ -186,8 +195,8 @@ func (e *FSM) runDispatcher() {
 					}
 				}()
 
-				ctx, err := action(nextCtx)
-				actionRes <- &resultOfActionTransition{
+				ctx, err := actionFn(nextCtx)
+				actionRes <- resultOfActionTransition{
 					err: err,
 					ctx: ctx,
 				}
@@ -223,7 +232,7 @@ func (e *FSM) runDispatcher() {
 	} // forend dispatch
 }
 
-// Dispatch dispatcher of finite state machine.
+// Dispatch dispatcher of finite state machine (thread-safe).
 // Returns the channel for feedback and the function of cancel of transition context.
 func (e *FSM) Dispatch(ctx context.Context, next State) (chan error, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -233,6 +242,7 @@ func (e *FSM) Dispatch(ctx context.Context, next State) (chan error, context.Can
 		done: make(chan error, 1),
 	}
 	e.toDispatch <- msg
+	atomic.AddUint64(&e.numAdded, 1)
 	return msg.done, cancel
 }
 
@@ -242,8 +252,29 @@ func (e *FSM) Stop() {
 	e.wg.Wait()
 }
 
+// Size returns number of messages in the queue (thread-safe).
+func (e *FSM) Size() uint64 {
+	return atomic.LoadUint64(&e.numAdded) - atomic.LoadUint64(&e.numProcessed)
+}
+
 type messageToDispatch struct {
 	ctx  context.Context
 	next State
 	done chan error
 }
+
+func (e *FSM) Describe(ch chan<- *prometheus.Desc) {
+	e.mActionDuration.Describe(ch)
+	e.mTotalDuration.Describe(ch)
+	e.mActionRequest.Describe(ch)
+	e.mTotalRequest.Describe(ch)
+}
+
+func (e *FSM) Collect(ch chan<- prometheus.Metric) {
+	e.mActionDuration.Collect(ch)
+	e.mTotalDuration.Collect(ch)
+	e.mActionRequest.Collect(ch)
+	e.mTotalRequest.Collect(ch)
+}
+
+var _ prometheus.Collector = (*FSM)(nil)
