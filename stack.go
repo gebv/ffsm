@@ -1,7 +1,9 @@
 package ffsm
 
-// Stack store of actions of event.
-type Stack map[StackKey][]ActionLayer
+import "context"
+
+// Stack actions of transition.
+type Stack map[StackKey][]Procedure
 
 // StackKey is the identifier of the transition.
 type StackKey struct {
@@ -10,30 +12,27 @@ type StackKey struct {
 }
 
 // Add registration action.
-func (r Stack) Add(src State, dst State, p Procedure, name string) {
+func (r Stack) Add(src State, dst State, p Procedure) Stack {
 	if r == nil {
-		panic("Stack is empty")
+		panic("Stack.Add: stack is empty")
 	}
 
 	e := StackKey{Src: src, Dst: dst}
 	if r[e] == nil {
-		r[e] = []ActionLayer{}
+		r[e] = []Procedure{}
 	}
-	r[e] = append(r[e], ActionLayer{Func: p, Name: name})
+	r[e] = append(r[e], p)
+
+	return r
 }
 
 // Get return actions of event.
-func (r Stack) Get(src, dst State) []ActionLayer {
+func (r Stack) Get(src, dst State) []Procedure {
 	if r == nil {
-		panic("Stack is empty")
+		panic("Stack.Get: stack is empty")
 	}
 	return r[StackKey{Src: src, Dst: dst}]
 }
 
-// ActionLayer is the action used in transitions.
-type ActionLayer struct {
-	// Fund procedure function.
-	Func Procedure
-	// Name action name.
-	Name string
-}
+// Procedure handler of transition.
+type Procedure func(ctx context.Context) (context.Context, error)

@@ -7,9 +7,9 @@ var (
 	// not have initial state of Machine.
 	ErrNotInitalState = errors.New("Is not set initial value of state")
 
-	// ErrNoTransition is the error returned by Machine from Dispatch method when the is
+	// ErrTransitionToItSelf is the error returned by Machine from Dispatch method when the is
 	// current state equal for next state.
-	ErrNoTransition = errors.New("No transition")
+	ErrTransitionToItSelf = errors.New("Transition to it self")
 
 	// ErrCtxCanceled is the error when context is canceled.
 	ErrCtxCanceled = errors.New("Context canceled")
