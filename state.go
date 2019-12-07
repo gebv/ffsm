@@ -14,11 +14,7 @@ func (s State) Match(in State) bool {
 	return s == in
 }
 
+// String returns string name of state.
 func (s State) String() string {
 	return string(s)
-}
-
-// Set to set new value.
-func (s *State) Set(newState State) {
-	*s = newState
 }

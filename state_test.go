@@ -1,39 +1,24 @@
 package ffsm
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-)
+func TestState_Match(t *testing.T) {
 
-func TestState_Set(t *testing.T) {
-	t.Run("Var", func(t *testing.T) {
-		foo := State("foo")
-		foo.Set(State("bar"))
-		assert.Equal(t, State("bar"), foo)
-	})
-	t.Run("StructEmpty", func(t *testing.T) {
-		type object struct {
-			S State
-		}
-		obj := object{}
-		obj.S.Set(State("foo"))
-		assert.Equal(t, State("foo"), obj.S)
-	})
-	t.Run("Struct", func(t *testing.T) {
-		type object struct {
-			S State
-		}
-		obj := object{S: State("bar")}
-		obj.S.Set(State("foo"))
-		assert.Equal(t, State("foo"), obj.S)
-	})
-	t.Run("StructPtr", func(t *testing.T) {
-		type object struct {
-			S State
-		}
-		obj := &object{S: State("bar")}
-		obj.S.Set(State("foo"))
-		assert.Equal(t, State("foo"), obj.S)
-	})
+	tests := []struct {
+		name string
+		in   State
+		args State
+		want bool
+	}{
+		{name: "empty", want: true},
+		{in: State("foo"), args: State("foo"), want: true},
+		{in: State("foo"), args: State("bar"), want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.in.Match(tt.args); got != tt.want {
+				t.Errorf("State.Match() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
