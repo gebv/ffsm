@@ -29,7 +29,13 @@ go get -u github.com/gebv/ffsm
 Simple example:
 
 ```golang
-// setup state transition diagram
+// enum of states
+var (
+	OpenDoor  = State("open")
+	CloseDoor = State("close")
+)
+
+// setup of state transition diagram
 wf := make(ffsm.Stack).Add(OpenDoor, CloseDoor).Add(CloseDoor, OpenDoor)
 
 // init FSM with initial state CloseDoor
