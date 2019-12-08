@@ -158,10 +158,7 @@ func (e *FSM) runDispatcher() {
 				continue
 			}
 		}
-		if current.Match(m.next) {
-			m.done <- ErrTransitionToItSelf
-			continue
-		}
+
 		actions = e.wf.Get(current, m.next)
 		if actions == nil {
 			m.done <- ErrNotRegTransition
