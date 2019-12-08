@@ -12,7 +12,7 @@ type StackKey struct {
 }
 
 // Add registration action.
-func (r Stack) Add(src State, dst State, p Procedure) Stack {
+func (r Stack) Add(src State, dst State, p ...Procedure) Stack {
 	if r == nil {
 		panic("Stack.Add: stack is empty")
 	}
@@ -21,7 +21,7 @@ func (r Stack) Add(src State, dst State, p Procedure) Stack {
 	if r[e] == nil {
 		r[e] = []Procedure{}
 	}
-	r[e] = append(r[e], p)
+	r[e] = append(r[e], p...)
 
 	return r
 }

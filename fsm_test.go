@@ -10,7 +10,63 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_FSM_Simple1(t *testing.T) {
+func Test_FSM_Simple(t *testing.T) {
+	wf := make(Stack).
+		Add(CloseDoor, OpenDoor).
+		Add(OpenDoor, CloseDoor)
+
+	fsm := NewFSM(wf, CloseDoor)
+	err := fsm.Dispatch(context.Background(), OpenDoor)
+	assert.NoError(t, err) // successful
+	assert.Equal(t, OpenDoor, fsm.State())
+
+	err = fsm.Dispatch(context.Background(), OpenDoor)
+	assert.Error(t, err) // failed because not exists transition OpenDoor to OpenDoor
+}
+
+func Benchmark_FSM_Simple(b *testing.B) {
+	wf := make(Stack).
+		Add(CloseDoor, OpenDoor, nil).
+		Add(OpenDoor, CloseDoor, nil)
+
+	fsm := NewFSM(wf, CloseDoor)
+	ctx := context.Background()
+	invertState := func(in State) State {
+		if in.Match(OpenDoor) {
+			return CloseDoor
+		}
+
+		if in.Match(CloseDoor) {
+			return OpenDoor
+		}
+		return UnknownState
+	}
+	b.ResetTimer()
+
+	var done chan error
+	var next State
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		fsm.SetState(CloseDoor)
+		next = invertState(fsm.State())
+		b.StartTimer()
+
+		done, _ = fsm.AsyncDispatch(ctx, next)
+		err := <-done
+		if err != nil {
+			b.Fatal("dispatch with err", err)
+		}
+
+		b.StopTimer()
+		if fsm.State() != next {
+			b.Fatalf("want %q, got %q", next, fsm.State())
+		}
+		b.StartTimer()
+	}
+	b.ReportAllocs()
+}
+
+func Test_FSM_TransitionWithHandlers(t *testing.T) {
 	door := &door{}
 	var NotExistsState = State("not exists")
 
@@ -191,7 +247,7 @@ func Test_FSM_Simple1(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fsm := NewFSM(tt.wf, tt.initState)
 
-			errCh, cancel := fsm.Dispatch(tt.ctx, tt.pushState)
+			errCh, cancel := fsm.AsyncDispatch(tt.ctx, tt.pushState)
 			if tt.cancelCtx {
 				cancel()
 			}
@@ -219,7 +275,6 @@ func Test_FSM_FullState_ConcurrentDispatch(t *testing.T) {
 	door := &door{}
 	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob).
 		Add(OpenDoor, CloseDoor, door.Empty)
-
 	ctx := context.WithValue(context.Background(), "__name", "bob")
 	fsm := NewFSM(wf, CloseDoor)
 	wg := sync.WaitGroup{}
@@ -235,7 +290,7 @@ func Test_FSM_FullState_ConcurrentDispatch(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for n := 0; n < 100; n++ {
-				done, _ := fsm.Dispatch(ctx, OpenDoor)
+				done, _ := fsm.AsyncDispatch(ctx, OpenDoor)
 				<-done
 			}
 		}()
@@ -243,39 +298,51 @@ func Test_FSM_FullState_ConcurrentDispatch(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for n := 0; n < 100; n++ {
-				done, _ := fsm.Dispatch(ctx, CloseDoor)
-				<-done
+				fsm.Dispatch(ctx, CloseDoor)
 			}
 		}()
 	}
 
 	assert.NotEqual(t, 0, fsm.Size())
 	wg.Wait()
-	t.Log(fsm.State())
 	assert.EqualValues(t, 0, fsm.Size())
 }
 
-func Benchmark_FSM_Simple1(b *testing.B) {
+func Benchmark_FSM_TransitionWithHandlers(b *testing.B) {
 	door := &door{}
-	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob)
+	wf := make(Stack).
+		Add(CloseDoor, OpenDoor, door.AccessOnlyBob).
+		Add(OpenDoor, CloseDoor, door.Empty)
 	ctx := context.WithValue(context.Background(), "__name", "bob")
+	invertState := func(in State) State {
+		if in.Match(OpenDoor) {
+			return CloseDoor
+		}
+
+		if in.Match(CloseDoor) {
+			return OpenDoor
+		}
+		return UnknownState
+	}
 	fsm := NewFSM(wf, CloseDoor)
 	b.ResetTimer()
 	var done chan error
+	var next State
 	for n := 0; n < b.N; n++ {
 		b.StopTimer()
 		fsm.SetState(CloseDoor)
+		next = invertState(fsm.State())
 		b.StartTimer()
 
-		done, _ = fsm.Dispatch(ctx, OpenDoor)
+		done, _ = fsm.AsyncDispatch(ctx, next)
 		err := <-done
 		if err != nil {
 			b.Fatal("dispatch with err", err)
 		}
 
 		b.StopTimer()
-		if fsm.State() != OpenDoor {
-			b.Fatal("want OpenDoor")
+		if fsm.State() != next {
+			b.Fatalf("want %q, got %q", next, fsm.State())
 		}
 		b.StartTimer()
 	}
