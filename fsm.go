@@ -11,9 +11,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const (
-	toDispatchCap = 128
-)
+// DefaultToDispatchCap default capacity of channel for new instance FSM.
+//
+// NOTE: set this value depending on your needs.
+var DefaultToDispatchCap = 8
 
 // Dispatcher dispatcher of finite state machine.
 type Dispatcher func(ctx context.Context, next State) (chan error, context.CancelFunc)
@@ -22,7 +23,7 @@ type Dispatcher func(ctx context.Context, next State) (chan error, context.Cance
 func NewFSM(wf Stack, initState State) *FSM {
 	e := &FSM{
 		wf:         wf,
-		toDispatch: make(chan *messageToDispatch, toDispatchCap),
+		toDispatch: make(chan *messageToDispatch, DefaultToDispatchCap),
 		state:      initState,
 		mActionDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -162,7 +163,7 @@ func (e *FSM) runDispatcher() {
 			continue
 		}
 		actions = e.wf.Get(current, m.next)
-		if actions == nil || len(actions) == 0 {
+		if actions == nil {
 			m.done <- ErrNotRegTransition
 			continue
 		}
@@ -178,6 +179,11 @@ func (e *FSM) runDispatcher() {
 		for _i, actionFn := range actions {
 			actionStart = time.Now()
 			actionRes = make(chan resultOfActionTransition, 1)
+
+			// For simple FSM, without transition handlers
+			if actionFn == nil {
+				continue
+			}
 
 			go func(ctx context.Context) {
 				defer func() {
@@ -233,9 +239,9 @@ func (e *FSM) runDispatcher() {
 	} // forend dispatch
 }
 
-// Dispatch dispatcher of finite state machine (thread-safe).
+// AsyncDispatch dispatcher of finite state machine (thread-safe).
 // Returns the channel for feedback and the function of cancel of transition context.
-func (e *FSM) Dispatch(ctx context.Context, next State) (chan error, context.CancelFunc) {
+func (e *FSM) AsyncDispatch(ctx context.Context, next State) (chan error, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	msg := &messageToDispatch{
 		ctx:  ctx,
@@ -245,6 +251,12 @@ func (e *FSM) Dispatch(ctx context.Context, next State) (chan error, context.Can
 	e.toDispatch <- msg
 	atomic.AddUint64(&e.numAdded, 1)
 	return msg.done, cancel
+}
+
+// DispatchAndWait dispatch and wait for completion.
+func (e *FSM) Dispatch(ctx context.Context, next State) error {
+	done, _ := e.AsyncDispatch(ctx, next)
+	return <-done
 }
 
 // Stop stops finite state machine.
