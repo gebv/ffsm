@@ -172,7 +172,7 @@ func (e *FSM) runDispatcher() {
 			continue
 		}
 
-		nextCtx, cancel := context.WithCancel(hydrateContextForAction(m.ctx, e.Dispatch, current, m.next))
+		nextCtx, cancel := context.WithCancel(hydrateContextForAction(m.ctx, current, m.next))
 		defer cancel()
 
 		for _i, actionFn := range actions {
@@ -229,6 +229,7 @@ func (e *FSM) runDispatcher() {
 
 		e.mActionDuration.WithLabelValues(e.name).Observe(float64(time.Since(dispatchStart).Nanoseconds() / int64(time.Millisecond)))
 		e.mTotalRequest.WithLabelValues(e.name).Inc()
+
 	} // forend dispatch
 }
 
