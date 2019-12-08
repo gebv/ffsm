@@ -4,42 +4,39 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gebv/ffsm)](https://goreportcard.com/report/github.com/gebv/ffsm)
 [![codecov](https://codecov.io/gh/gebv/ffsm/branch/master/graph/badge.svg)](https://codecov.io/gh/gebv/ffsm)
 
-Finite state machine (FSM) written in Go. It is a low-level primitive for more complex solutions.
+Finite state machine (FSM) written in Go. It is a low-level primitive for more complex solutions. Supported transition handler for advanced logic.
 
 Working code [see more in tests](fsm_test.go)
 
 ## Features
 
+* use as [simple FSM](#simple-FSM) or with [transition handlers](#fsm-with-transition-handlers) for advanced logic
 * dispatcher is thread-safe
-* implemented `prometheus.Collector`
+* implemented `prometheus.Collector` for monitoring
 
-## Examples
+## Simple FSM
 
-The following is example code.
+Can open door and close door. Opened door can not open. And closed door can not close.
 
-```golang
-// FSM transition service
-s := &door{}
+Follow state transition diagram in image
 
-// workflow or stateflow
-wf := make(Stack).
-  Add(CloseDoor, OpenDoor, s.AccessOnlyBob). // bob only have access to door (sets payload via context).
-  Add(OpenDoor, CloseDoor, s.Empty) // anyone can close the door.
+<img title="State transition diagram for simlpe FSM" src=".github/fsm-simple.png" width="350" />
 
-// setup FSM with initial state
-fsm := NewFSM(wf, CloseDoor)
-// or sets state (thread-safe)
-fsm.SetState(CloseDoor)
+TODO: on the playground
+TODO: listing code
 
-// send a transition request (thread-safe)
-errCh, _ := fsm.Dispatch(ctx, OpenDoor)
+## FSM with transition handlers
 
-// (optional) waiting until the processing of the current transition is completed
-err := <- errCh
-if err != nil {
-  // handle the transition error
-}
+Only Bob can open door. Anyone can close the door. And also opened door can not open and closed door can not close.
 
-// final state (thread-safe)
-fsm.State()
-```
+Follow state transition diagram in image
+
+<img title="Simple FSM" src=".github/fsm-with-handler.png" width="350" />
+
+TODO: on the playground
+TODO: listing code
+
+
+# License
+
+MIT, see [LICENSE](./LICENSE).
