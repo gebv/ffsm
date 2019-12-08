@@ -7,6 +7,7 @@
 Finite state machine (FSM) written in Go. It is a low-level primitive for more complex solutions. Supported (optional)  transition handler for advanced logic.
 
 * [Features](#features)
+* [Quickstart](#quickstart)
 * [Example code](#examples)
 * [Additional packages](#additional-packages)
 * [Licence](#license)
