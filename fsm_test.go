@@ -2,18 +2,19 @@ package ffsm
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_FSM_Simple(t *testing.T) {
 	wf := make(Stack).
 		Add(CloseDoor, OpenDoor).
-		Add(OpenDoor, CloseDoor)
+		Add(OpenDoor, CloseDoor).
+		Add(OpenDoor, OpenDoor)
 
 	fsm := NewFSM(wf, CloseDoor)
 	err := fsm.Dispatch(context.Background(), OpenDoor)
@@ -21,7 +22,13 @@ func Test_FSM_Simple(t *testing.T) {
 	assert.Equal(t, OpenDoor, fsm.State())
 
 	err = fsm.Dispatch(context.Background(), OpenDoor)
-	assert.Error(t, err) // failed because not exists transition OpenDoor to OpenDoor
+	assert.NoError(t, err) // successful
+
+	err = fsm.Dispatch(context.Background(), CloseDoor)
+	assert.NoError(t, err) // successful
+
+	err = fsm.Dispatch(context.Background(), CloseDoor)
+	assert.Error(t, err) // failed because not exists transition CloseDoor to CloseDoor
 }
 
 func Benchmark_FSM_Simple(b *testing.B) {
