@@ -224,6 +224,10 @@ const (
 * [github.com/prometheus/client_golang](https://github.com/prometheus/client_golang) prometheus client for golang
 * [github.com/stretchr/testify](https://github.com/stretchr/testify) helper package for testing
 
+# Version Policy
+
+`ffsm` follows semantic versioning for the documented public API on stable releases. v1.2 is the latest stable version. Follows [changelog](./CHANGELOG.md).
+
 # License
 
 MIT, see [LICENSE](./LICENSE).
