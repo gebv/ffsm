@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gebv/ffsm)](https://goreportcard.com/report/github.com/gebv/ffsm)
 [![codecov](https://codecov.io/gh/gebv/ffsm/branch/master/graph/badge.svg)](https://codecov.io/gh/gebv/ffsm)
 
-Finite state machine (FSM) written in Go. It is a low-level primitive for more complex solutions. Supported (optional)  transition handler for advanced logic.
+Finite State Machine (or FSM) written in Go. It is a low-level primitive for more complex solutions. Supported (optional)  transition handler for advanced logic.
 
 * [Features](#features)
 * [Quickstart](#quickstart)
@@ -52,6 +52,8 @@ fsm.State() // end state
 ```
 
 ## Examples
+
+Finite state machine example
 
 ### Simple FSM
 
