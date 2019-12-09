@@ -129,7 +129,7 @@ func (e dispatcherError) Error() string {
 	if e.Recover == nil {
 		return ""
 	}
-	return fmt.Sprintf("dispatcher panic: %v (%q=>%q #%d)", e.Recover, e.SrcState, e.DstState, e.IndexAction)
+	return fmt.Sprintf("dispatcher panic: %v (%q=>%q #%d)\n%s", e.Recover, e.SrcState, e.DstState, e.IndexAction, e.DebugStack)
 }
 
 type resultOfActionTransition struct {

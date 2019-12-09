@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- added debug stack for `dispatcherError` (for debug if panic in handler)
+
 ## [1.2.1] - 2019-12-08
 
 ### Added
