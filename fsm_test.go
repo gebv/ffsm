@@ -147,7 +147,7 @@ func Test_FSM_TransitionWithHandlers(t *testing.T) {
 			doNotWaitComplete: true,
 		},
 		{
-			name:              "payloadInTheContext",
+			name:              "notWaitForTheResult_payloadInTheContext",
 			wf:                make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob),
 			ctx:               context.WithValue(context.Background(), "__name", "bob"),
 			initState:         CloseDoor,
@@ -282,7 +282,7 @@ func Test_FSM_TransitionWithHandlers(t *testing.T) {
 
 func Test_FSM_FullState_ConcurrentDispatch(t *testing.T) {
 	door := &door{}
-	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBob).
+	wf := make(Stack).Add(CloseDoor, OpenDoor, door.AccessOnlyBobWithoutDelay).
 		Add(OpenDoor, CloseDoor, door.Empty)
 	ctx := context.WithValue(context.Background(), "__name", "bob")
 	fsm := NewFSM(wf, CloseDoor)
@@ -384,6 +384,11 @@ func (d door) Empty(ctx context.Context) (context.Context, error) {
 }
 
 func (d door) AccessOnlyBob(ctx context.Context) (context.Context, error) {
+	time.Sleep(time.Millisecond * 1) // delay for tests that do not wait completion handler
+	return d.AccessOnlyBobWithoutDelay(ctx)
+}
+
+func (d door) AccessOnlyBobWithoutDelay(ctx context.Context) (context.Context, error) {
 	name, ok := ctx.Value("__name").(string)
 	if !ok {
 		return ctx, errors.New("access denied")
