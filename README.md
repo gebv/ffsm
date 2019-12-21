@@ -230,7 +230,7 @@ const (
 
 # Version Policy
 
-`ffsm` follows semantic versioning for the documented public API on stable releases. v1.3 is the latest stable version. Follows [changelog](./CHANGELOG.md).
+`ffsm` follows semantic versioning for the documented public API on stable releases. v1.2 is the latest stable version. Follows [changelog](./CHANGELOG.md).
 
 # License
 
