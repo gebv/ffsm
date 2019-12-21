@@ -33,8 +33,8 @@ Simple example:
 ```golang
 // enum of states
 var (
-	OpenDoor  = State("open")
-	CloseDoor = State("close")
+	OpenDoor  = "open"
+	CloseDoor = "close"
 )
 
 // setup of state transition diagram
@@ -65,7 +65,7 @@ Follow state transition diagram in image
 
 <img title="State transition diagram for simlpe FSM" src=".github/fsm-simple.png" width="350" />
 
-On the playground https://play.golang.org/p/Z_iOnuTXOG4
+On the playground https://play.golang.org/p/J8Cej99Rp-J
 
 <details>
   <summary>Listing code</summary>
@@ -120,8 +120,8 @@ func main() {
 }
 
 const (
-	OpenDoor  = ffsm.State("open")
-	CloseDoor = ffsm.State("close")
+	OpenDoor  = "open"
+	CloseDoor = "close"
 )
 ```
 
@@ -135,7 +135,7 @@ Follow state transition diagram in image
 
 <img title="Simple FSM" src=".github/fsm-with-handlers.png" width="350" />
 
-On the playground https://play.golang.org/p/6a_wvlMTnbx
+On the playground https://play.golang.org/p/M5JiBwUycnx
 
 <details>
   <summary>Listing code</summary>
@@ -213,8 +213,8 @@ func main() {
 }
 
 const (
-	OpenDoor  = ffsm.State("open")
-	CloseDoor = ffsm.State("close")
+	OpenDoor  = "open"
+	CloseDoor = "close"
 )
 ```
 </details>
