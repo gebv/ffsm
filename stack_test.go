@@ -9,31 +9,31 @@ import (
 
 func TestStack_AddAndGet(t *testing.T) {
 	s := make(Stack)
-	s.Add(State("a"), State("b"), nil)
-	assert.NotEmpty(t, s.Get(State("a"), State("b")))
-	assert.Len(t, s.Get(State("a"), State("b")), 1)
+	s.Add("a", "b", nil)
+	assert.NotEmpty(t, s.Get("a", "b"))
+	assert.Len(t, s.Get("a", "b"), 1)
 
-	s.Add(State("a"), State("b"), nil)
-	assert.NotEmpty(t, s.Get(State("a"), State("b")))
-	assert.Len(t, s.Get(State("a"), State("b")), 2)
+	s.Add("a", "b", nil)
+	assert.NotEmpty(t, s.Get("a", "b"))
+	assert.Len(t, s.Get("a", "b"), 2)
 
-	s.Add(State("c"), State("d"), nil).
-		Add(State("c"), State("d"), nil)
-	assert.NotEmpty(t, s.Get(State("a"), State("b")))
-	assert.Len(t, s.Get(State("a"), State("b")), 2)
-	assert.NotEmpty(t, s.Get(State("c"), State("d")))
-	assert.Len(t, s.Get(State("c"), State("d")), 2)
+	s.Add("c", "d", nil).
+		Add("c", "d", nil)
+	assert.NotEmpty(t, s.Get("a", "b"))
+	assert.Len(t, s.Get("a", "b"), 2)
+	assert.NotEmpty(t, s.Get("c", "d"))
+	assert.Len(t, s.Get("c", "d"), 2)
 
-	assert.Empty(t, s.Get(State("not"), State("exists")))
-	assert.Len(t, s.Get(State("not"), State("exists")), 0)
+	assert.Empty(t, s.Get("not", "exsts"))
+	assert.Len(t, s.Get("not", "exsts"), 0)
 }
 
 func TestAsync_Get(t *testing.T) {
 	r := make(Stack)
-	r.Add(State("a"), State("b"), nil)
-	r.Add(State("a"), State("b"), nil)
-	r.Add(State("b"), State("c"), nil)
-	r.Add(State("c"), State("a"), nil)
+	r.Add("a", "b", nil)
+	r.Add("a", "b", nil)
+	r.Add("b", "c", nil)
+	r.Add("c", "a", nil)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -42,7 +42,7 @@ func TestAsync_Get(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				actions := r.Get(State("not exists"), State("not exists"))
+				actions := r.Get("no exists", "not exists")
 				if len(actions) != 0 {
 					t.Fatal("not expected len actions")
 				}
@@ -56,7 +56,7 @@ func TestAsync_Get(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				actions := r.Get(State("not exists"), State("not exists"))
+				actions := r.Get("no exists", "not exists")
 				if len(actions) != 0 {
 					t.Fatal("not expected len actions")
 				}

@@ -17,10 +17,10 @@ import (
 var DefaultToDispatchCap = 8
 
 // Dispatcher dispatcher of finite state machine.
-type Dispatcher func(ctx context.Context, next State) (chan error, context.CancelFunc)
+type Dispatcher func(ctx context.Context, next string) (chan error, context.CancelFunc)
 
 // NewFSM returns new finite state machine with initial state.
-func NewFSM(wf Stack, initState State) *FSM {
+func NewFSM(wf Stack, initState string) *FSM {
 	e := &FSM{
 		wf:         wf,
 		toDispatch: make(chan *messageToDispatch, DefaultToDispatchCap),
@@ -78,7 +78,7 @@ func NewFSM(wf Stack, initState State) *FSM {
 // FSM finite state machine.
 type FSM struct {
 	wf         Stack
-	state      State
+	state      string
 	stateMutex sync.RWMutex
 	wg         sync.WaitGroup
 	toDispatch chan *messageToDispatch
@@ -95,7 +95,7 @@ type FSM struct {
 }
 
 // State returns current state.
-func (e *FSM) State() State {
+func (e *FSM) State() string {
 	e.stateMutex.RLock()
 	defer e.stateMutex.RUnlock()
 	return e.state
@@ -107,7 +107,7 @@ func (e *FSM) SetName(name string) {
 }
 
 // SetState sets new state.
-func (e *FSM) SetState(newState State) {
+func (e *FSM) SetState(newState string) {
 	e.stateMutex.Lock()
 	e.state = newState
 	e.stateMutex.Unlock()
@@ -117,8 +117,8 @@ type dispatcherError struct {
 	Err         error
 	Recover     interface{}
 	DebugStack  string
-	SrcState    State
-	DstState    State
+	SrcState    string
+	DstState    string
 	IndexAction int
 }
 
@@ -140,7 +140,7 @@ type resultOfActionTransition struct {
 func (e *FSM) runDispatcher() {
 	defer e.wg.Done()
 
-	var current State
+	var current string
 	var actions []Procedure
 	var err error
 	var dispatchStart, actionStart time.Time
@@ -152,7 +152,7 @@ func (e *FSM) runDispatcher() {
 		err = nil
 		current = e.State()
 
-		if current.Match(UnknownState) {
+		if current == UnknownState {
 			if m.done != nil {
 				m.done <- ErrNotInitalState
 				continue
@@ -238,7 +238,7 @@ func (e *FSM) runDispatcher() {
 
 // AsyncDispatch dispatcher of finite state machine (thread-safe).
 // Returns the channel for feedback and the function of cancel of transition context.
-func (e *FSM) AsyncDispatch(ctx context.Context, next State) (chan error, context.CancelFunc) {
+func (e *FSM) AsyncDispatch(ctx context.Context, next string) (chan error, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	msg := &messageToDispatch{
 		ctx:  ctx,
@@ -250,8 +250,8 @@ func (e *FSM) AsyncDispatch(ctx context.Context, next State) (chan error, contex
 	return msg.done, cancel
 }
 
-// DispatchAndWait dispatch and wait for completion.
-func (e *FSM) Dispatch(ctx context.Context, next State) error {
+// Dispatch dispatch and wait for completion.
+func (e *FSM) Dispatch(ctx context.Context, next string) error {
 	done, _ := e.AsyncDispatch(ctx, next)
 	return <-done
 }
@@ -269,7 +269,7 @@ func (e *FSM) Size() uint64 {
 
 type messageToDispatch struct {
 	ctx  context.Context
-	next State
+	next string
 	done chan error
 }
 
@@ -288,3 +288,6 @@ func (e *FSM) Collect(ch chan<- prometheus.Metric) {
 }
 
 var _ prometheus.Collector = (*FSM)(nil)
+
+// UnknownState it is value is an undefined state.
+const UnknownState = ""

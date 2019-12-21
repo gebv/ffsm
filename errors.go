@@ -18,8 +18,8 @@ var (
 // DispatchError is the container with custom errors for dispatcher.
 type DispatchError struct {
 	ActionName        string
-	SrcState          State
-	DstState          State
+	SrcState          string
+	DstState          string
 	Err               error
 	IsPanic           bool
 	PanicStackRuntime string

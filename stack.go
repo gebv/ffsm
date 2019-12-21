@@ -7,12 +7,12 @@ type Stack map[StackKey][]Procedure
 
 // StackKey is the identifier of the transition.
 type StackKey struct {
-	Src State
-	Dst State
+	Src string
+	Dst string
 }
 
 // Add registration action.
-func (r Stack) Add(src State, dst State, p ...Procedure) Stack {
+func (r Stack) Add(src string, dst string, p ...Procedure) Stack {
 	if r == nil {
 		panic("Stack.Add: stack is empty")
 	}
@@ -27,7 +27,7 @@ func (r Stack) Add(src State, dst State, p ...Procedure) Stack {
 }
 
 // Get return actions of event.
-func (r Stack) Get(src, dst State) []Procedure {
+func (r Stack) Get(src, dst string) []Procedure {
 	if r == nil {
 		panic("Stack.Get: stack is empty")
 	}

@@ -3,7 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.3] - 2019-12-21
+
 - added debug stack for `dispatcherError` (for debug if panic in handler)
+- **without backward compatibility** removed type State instead of it the usual string
 
 ## [1.2.1] - 2019-12-08
 

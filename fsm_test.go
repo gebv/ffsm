@@ -38,12 +38,12 @@ func Benchmark_FSM_Simple(b *testing.B) {
 
 	fsm := NewFSM(wf, CloseDoor)
 	ctx := context.Background()
-	invertState := func(in State) State {
-		if in.Match(OpenDoor) {
+	invertState := func(in string) string {
+		if in == OpenDoor {
 			return CloseDoor
 		}
 
-		if in.Match(CloseDoor) {
+		if in == CloseDoor {
 			return OpenDoor
 		}
 		return UnknownState
@@ -51,7 +51,7 @@ func Benchmark_FSM_Simple(b *testing.B) {
 	b.ResetTimer()
 
 	var done chan error
-	var next State
+	var next string
 	for n := 0; n < b.N; n++ {
 		b.StopTimer()
 		fsm.SetState(CloseDoor)
@@ -75,15 +75,15 @@ func Benchmark_FSM_Simple(b *testing.B) {
 
 func Test_FSM_TransitionWithHandlers(t *testing.T) {
 	door := &door{}
-	var NotExistsState = State("not exists")
+	var NotExistsState = string("not exists")
 
 	tests := []struct {
 		name              string
 		wf                Stack
 		ctx               context.Context
-		initState         State
-		pushState         State
-		finiteState       State
+		initState         string
+		pushState         string
+		finiteState       string
 		err               error
 		cancelCtx         bool
 		doNotWaitComplete bool // do not wait for dispatcher to complete
@@ -323,12 +323,12 @@ func Benchmark_FSM_TransitionWithHandlers(b *testing.B) {
 		Add(CloseDoor, OpenDoor, door.AccessOnlyBob).
 		Add(OpenDoor, CloseDoor, door.Empty)
 	ctx := context.WithValue(context.Background(), "__name", "bob")
-	invertState := func(in State) State {
-		if in.Match(OpenDoor) {
+	invertState := func(in string) string {
+		if in == OpenDoor {
 			return CloseDoor
 		}
 
-		if in.Match(CloseDoor) {
+		if in == CloseDoor {
 			return OpenDoor
 		}
 		return UnknownState
@@ -336,7 +336,7 @@ func Benchmark_FSM_TransitionWithHandlers(b *testing.B) {
 	fsm := NewFSM(wf, CloseDoor)
 	b.ResetTimer()
 	var done chan error
-	var next State
+	var next string
 	for n := 0; n < b.N; n++ {
 		b.StopTimer()
 		fsm.SetState(CloseDoor)
@@ -359,9 +359,9 @@ func Benchmark_FSM_TransitionWithHandlers(b *testing.B) {
 }
 
 const (
-	OpenDoor   State = "open"
-	TokTokDoor State = "toktok"
-	CloseDoor  State = "close"
+	OpenDoor   = "open"
+	TokTokDoor = "toktok"
+	CloseDoor  = "close"
 )
 
 type door struct {
